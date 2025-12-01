@@ -1,6 +1,7 @@
 package com.example.morsecoach
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,25 +28,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.morsecoach.ui.theme.MorseCodeLearnerTheme
+import com.example.morsecoach.ui.theme.MorseCoachTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    isLoggedIn: Boolean,
     onLearnClick: () -> Unit,
-    onTranslateClick: () -> Unit
+    onTranslateClick: () -> Unit,
+    onLoginClick: () -> Unit,
+    onProfileClick: () -> Unit // Renamed from onLogoutClick
 ) {
+    // Dropdown state removed
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = { /* TODO: Handle login click */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Login or Profile",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
+                    Box {
+                        IconButton(onClick = {
+                            if (isLoggedIn) {
+                                onProfileClick() // Navigate to profile instead of showing menu
+                            } else {
+                                onLoginClick()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = if (isLoggedIn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -63,7 +77,13 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = onLearnClick,
+                onClick = {
+                    if (isLoggedIn) {
+                        onLearnClick()
+                    } else {
+                        onLoginClick()
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(60.dp),
@@ -73,7 +93,7 @@ fun HomeScreen(
                 )
             ) {
                 Text(
-                    text = "Learn Morse",
+                    text = if (isLoggedIn) "Learn Morse" else "Log In to Learn",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -104,7 +124,13 @@ fun HomeScreen(
 @Preview(showBackground = true)
 @Composable
 fun HomePreview() {
-    MorseCodeLearnerTheme {
-        HomeScreen(onLearnClick = {}, onTranslateClick = {})
+    MorseCoachTheme {
+        HomeScreen(
+            isLoggedIn = false,
+            onLearnClick = {},
+            onTranslateClick = {},
+            onLoginClick = {},
+            onProfileClick = {}
+        )
     }
 }

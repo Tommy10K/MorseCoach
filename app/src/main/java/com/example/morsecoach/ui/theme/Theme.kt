@@ -26,7 +26,7 @@ private val AppDarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun MorseCodeLearnerTheme(
+fun MorseCoachTheme(
     darkTheme: Boolean = true,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
