@@ -13,4 +13,6 @@ object MorseData {
         '4' to "....-", '5' to ".....", '6' to "-....", '7' to "--...",
         '8' to "---..", '9' to "----."
     )
+
+    val codeToLetter: Map<String, Char> = letterToCode.entries.associate { (k, v) -> v to k }
 }
