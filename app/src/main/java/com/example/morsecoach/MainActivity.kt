@@ -88,7 +88,31 @@ fun AppNavigation() {
         composable("learn_menu") {
             LearnMenuScreen(
                 onGlossaryClick = { navController.navigate("glossary") },
-                onLessonsClick = { /* TODO: Navigate to Lesson List */ },
+                onLessonsClick = { navController.navigate("lesson_list") },
+                onChallengeClick = { navController.navigate("challenge") },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("challenge") {
+            ChallengeScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("lesson_list") {
+            LessonListScreen(
+                onLessonClick = { lessonId ->
+                    navController.navigate("lesson/$lessonId")
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("lesson/{lessonId}") { backStackEntry ->
+            val lessonId = backStackEntry.arguments?.getString("lessonId") ?: return@composable
+            LessonScreen(
+                lessonId = lessonId,
                 onBackClick = { navController.popBackStack() }
             )
         }

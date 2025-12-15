@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 fun LearnMenuScreen(
     onGlossaryClick: () -> Unit,
     onLessonsClick: () -> Unit,
+    onChallengeClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Scaffold(
@@ -87,6 +88,25 @@ fun LearnMenuScreen(
             ) {
                 Text(
                     text = "Glossary (Alphabet)",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onChallengeClick,
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .height(80.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = "Challenge Mode",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )

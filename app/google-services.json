@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "869051395582",
+    "project_id": "morsecoach-2cd51",
+    "storage_bucket": "morsecoach-2cd51.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:869051395582:android:aa8e6616fa96c5f7aa24af",
+        "android_client_info": {
+          "package_name": "com.example.morsecoach"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEWdjetb2ut91stWvMqkoP7K8jY-K9Zvs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
