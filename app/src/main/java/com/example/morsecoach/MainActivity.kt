@@ -75,6 +75,9 @@ fun AppNavigation() {
                 onTranslateClick = {
                     navController.navigate("translate")
                 },
+                onChallengesClick = {
+                    navController.navigate("challenges_menu")
+                },
                 onLoginClick = {
                     navController.navigate("login")
                 },
@@ -89,7 +92,14 @@ fun AppNavigation() {
             LearnMenuScreen(
                 onGlossaryClick = { navController.navigate("glossary") },
                 onLessonsClick = { navController.navigate("lesson_list") },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("challenges_menu") {
+            ChallengesMenuScreen(
                 onChallengeClick = { navController.navigate("challenge") },
+                onLeaderboardClick = { navController.navigate("leaderboard") },
                 onBackClick = { navController.popBackStack() }
             )
         }
@@ -141,6 +151,12 @@ fun AppNavigation() {
                 onBackClick = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable("leaderboard") {
+            LeaderboardScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

@@ -28,15 +28,15 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LearnMenuScreen(
-    onGlossaryClick: () -> Unit,
-    onLessonsClick: () -> Unit,
+fun ChallengesMenuScreen(
+    onChallengeClick: () -> Unit,
+    onLeaderboardClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Learn") },
+                title = { Text("Challenges") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -57,7 +57,7 @@ fun LearnMenuScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = onLessonsClick,
+                onClick = onChallengeClick,
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(80.dp),
@@ -67,7 +67,7 @@ fun LearnMenuScreen(
                 )
             ) {
                 Text(
-                    text = "Lessons",
+                    text = "Challenge Mode",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -76,7 +76,7 @@ fun LearnMenuScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = onGlossaryClick,
+                onClick = onLeaderboardClick,
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(80.dp),
@@ -86,13 +86,11 @@ fun LearnMenuScreen(
                 )
             ) {
                 Text(
-                    text = "Glossary (Alphabet)",
+                    text = "Leaderboards",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

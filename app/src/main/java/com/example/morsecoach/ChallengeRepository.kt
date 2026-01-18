@@ -8,10 +8,21 @@ import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import com.example.morsecoach.BuildConfig
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.tasks.await
+
 
 class ChallengeRepository {
 
     private val apiKey = BuildConfig.GEMINI_API_KEY
+    private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
 
     private val fallbackPhrases = listOf(
         "SOS TITANIC",
@@ -85,6 +96,154 @@ class ChallengeRepository {
                 e.printStackTrace()
                 // 3. Fallback on ANY exception (No internet, etc)
                 return@withContext fallbackPhrases.random()
+            }
+        }
+    }
+
+    suspend fun submitScore(wpm: Double, accuracy: Double = 100.0, maxHistory: Int = 20) {
+        val user = auth.currentUser ?: return
+        val userId = user.uid
+        val timestamp = Timestamp.now()
+
+        val username = withContext(Dispatchers.IO) {
+            try {
+                val profileDoc = db.collection("users").document(userId).get().await()
+                profileDoc.getString("username")
+                    ?: user.email?.substringBefore("@")
+                    ?: "Unknown"
+            } catch (e: Exception) {
+                user.email?.substringBefore("@") ?: "Unknown"
+            }
+        }
+
+        val runData = hashMapOf(
+            "userId" to userId,
+            "username" to username,
+            "wpm" to wpm,
+            "accuracy" to accuracy,
+            "timestamp" to timestamp
+        )
+
+        withContext(Dispatchers.IO) {
+            try {
+                db.collection("leaderboard_runs").add(runData).await()
+
+                val userRef = db.collection("users").document(userId)
+
+                // Lifetime aggregates (accurate forever, O(1) to read)
+                userRef.set(
+                    mapOf(
+                        "lifetimeRuns" to FieldValue.increment(1),
+                        "lifetimeWpmSum" to FieldValue.increment(wpm),
+                        "lifetimeAccuracySum" to FieldValue.increment(accuracy)
+                    ),
+                    SetOptions.merge()
+                ).await()
+
+                // Per-user run history (keep newest N docs)
+                val historyRef = userRef.collection("run_history")
+                historyRef.add(
+                    mapOf(
+                        "wpm" to wpm,
+                        "accuracy" to accuracy,
+                        "timestamp" to timestamp
+                    )
+                ).await()
+
+                // Prune older history docs beyond maxHistory
+                if (maxHistory > 0) {
+                    val newest = historyRef
+                        .orderBy("timestamp", Query.Direction.DESCENDING)
+                        .limit(maxHistory.toLong())
+                        .get()
+                        .await()
+
+                    if (newest.size() >= maxHistory) {
+                        val lastKept = newest.documents.lastOrNull()
+                        if (lastKept != null) {
+                            val older = historyRef
+                                .orderBy("timestamp", Query.Direction.DESCENDING)
+                                .startAfter(lastKept)
+                                .get()
+                                .await()
+
+                            if (!older.isEmpty) {
+                                db.runBatch { batch ->
+                                    older.documents.forEach { doc ->
+                                        batch.delete(doc.reference)
+                                    }
+                                }.await()
+                            }
+                        }
+                    }
+                }
+
+                db.runTransaction { transaction ->
+                    val snapshot = transaction.get(userRef)
+                    val currentBest = snapshot.getDouble("highScore")
+                        ?: snapshot.getLong("highScore")?.toDouble()
+                        ?: 0.0
+                    if (wpm > currentBest) {
+                        transaction.update(userRef, "highScore", wpm)
+                    }
+                }.await()
+
+                val pbRef = db.collection("leaderboard_pbs").document(userId)
+                db.runTransaction { transaction ->
+                    val snapshot = transaction.get(pbRef)
+                    val currentBest = snapshot.getDouble("wpm") ?: 0.0
+                    if (wpm > currentBest) {
+                        transaction.set(pbRef, runData)
+                    }
+                }.await()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    suspend fun getTopRuns(): List<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val result = db.collection("leaderboard_runs")
+                    .orderBy("wpm", Query.Direction.DESCENDING)
+                    .limit(10)
+                    .get()
+                    .await()
+
+                result.documents.map { doc ->
+                    mapOf(
+                        "username" to (doc.getString("username") ?: "Unknown"),
+                        "wpm" to (doc.getDouble("wpm") ?: 0.0),
+                        "userId" to (doc.getString("userId") ?: "")
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
+            }
+        }
+    }
+
+    suspend fun getTopPBs(): List<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val result = db.collection("leaderboard_pbs")
+                    .orderBy("wpm", Query.Direction.DESCENDING)
+                    .limit(20)
+                    .get()
+                    .await()
+
+                result.documents.map { doc ->
+                    mapOf(
+                        "username" to (doc.getString("username") ?: "Unknown"),
+                        "wpm" to (doc.getDouble("wpm") ?: 0.0),
+                        "userId" to doc.id
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
             }
         }
     }

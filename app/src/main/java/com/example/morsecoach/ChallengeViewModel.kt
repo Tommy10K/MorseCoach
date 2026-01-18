@@ -29,6 +29,10 @@ class ChallengeViewModel : ViewModel() {
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private var startTime: Long = 0
+    private var hasSubmittedScore: Boolean = false
+
+    private var totalInputAttempts: Int = 0
+    private var incorrectAttempts: Int = 0
 
     fun startNewGame() {
         viewModelScope.launch {
@@ -36,6 +40,9 @@ class ChallengeViewModel : ViewModel() {
             _wpm.value = null
             _currentInput.value = ""
             _isError.value = false
+            hasSubmittedScore = false
+            totalInputAttempts = 0
+            incorrectAttempts = 0
             
             val phrase = repository.generateChallengePhrase()
             _targetPhrase.value = phrase
@@ -47,11 +54,22 @@ class ChallengeViewModel : ViewModel() {
     }
 
     fun onInputChange(input: String) {
+        val previousInput = _currentInput.value
         _currentInput.value = input
+
+        // Count only "append" actions as attempts (dit/dah/space buttons).
+        // Backspaces reduce the string and shouldn't penalize accuracy.
+        val isAppend = input.length > previousInput.length && input.startsWith(previousInput)
+        if (isAppend) {
+            totalInputAttempts += 1
+        }
         
         // Check for error immediately (prefix match)
         if (!_targetMorse.value.startsWith(input)) {
             _isError.value = true
+            if (isAppend) {
+                incorrectAttempts += 1
+            }
         } else {
             _isError.value = false
             // Check for completion
@@ -64,14 +82,30 @@ class ChallengeViewModel : ViewModel() {
     private fun finishGame() {
         val endTime = System.currentTimeMillis()
         val durationSeconds = (endTime - startTime) / 1000.0
-        val durationMinutes = durationSeconds / 60.0
+        val safeDurationSeconds = durationSeconds.coerceAtLeast(1.0)
+        val durationMinutes = safeDurationSeconds / 60.0
         
         // Standard WPM: (Characters / 5) / Minutes
         // We use the length of the original text phrase, not the morse code length
         val charCount = _targetPhrase.value.length
         val calculatedWpm = (charCount / 5.0) / durationMinutes
         
-        _wpm.value = String.format("%.1f", calculatedWpm).toDouble()
+        val finalWpm = kotlin.math.round(calculatedWpm * 10) / 10.0
+        _wpm.value = finalWpm
+
+        val accuracy = if (totalInputAttempts <= 0) {
+            100.0
+        } else {
+            val correct = (totalInputAttempts - incorrectAttempts).coerceAtLeast(0)
+            kotlin.math.round((correct.toDouble() / totalInputAttempts.toDouble()) * 1000) / 10.0
+        }
+
+        if (!hasSubmittedScore) {
+            hasSubmittedScore = true
+            viewModelScope.launch {
+                repository.submitScore(finalWpm, accuracy)
+            }
+        }
     }
 
     private fun convertToMorse(text: String): String {

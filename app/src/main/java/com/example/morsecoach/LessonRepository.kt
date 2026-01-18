@@ -1,5 +1,7 @@
 package com.example.morsecoach
 
+import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -33,13 +35,19 @@ class LessonRepository {
     }
 
     private suspend fun seedLessons() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        Log.d("LessonRepository", "Seeding lessons to Firestore (uid=$uid)")
+
         val initialLessons = listOf(
-            Lesson("lesson_01", "Basic Vowels", 1, "A E I O U"),
-            Lesson("lesson_02", "Common Consonants", 2, "T N S H R"),
-            Lesson("lesson_03", "The Rest of the Vowels", 3, "Y"), // Y is sometimes a vowel :)
-            Lesson("lesson_04", "SOS Letters", 4, "S O"),
-            Lesson("lesson_05", "Numbers 1-5", 5, "1 2 3 4 5")
+            Lesson("lesson_01", "The Basics", 1, "E T I M"),
+            Lesson("lesson_02", "Common Letters", 2, "A N S O H"),
+            Lesson("lesson_03", "Mirrors & Opposites", 3, "R K D U G W"),
+            Lesson("lesson_04", "Rhythm & Flow", 4, "B V F L P"),
+            Lesson("lesson_05", "Complex Characters", 5, "Q J X Y Z C"),
+            Lesson("lesson_06", "Numbers 1-5", 6, "1 2 3 4 5"),
+            Lesson("lesson_07", "Numbers 6-0", 7, "6 7 8 9 0")
         )
+
         initialLessons.forEach { lesson ->
             lessonsCollection.document(lesson.id).set(lesson).await()
         }

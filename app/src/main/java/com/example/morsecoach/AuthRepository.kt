@@ -58,7 +58,7 @@ class AuthRepository {
             "username" to email, // Default username is email
             "currentLevelIndex" to 0,
             "completedLessons" to emptyList<String>(),
-            "highScore" to 0
+            "highScore" to 0.0
         )
 
         db.collection("users").document(userId)
