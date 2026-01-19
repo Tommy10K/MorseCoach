@@ -28,7 +28,6 @@ fun LeaderboardScreen(onBackClick: () -> Unit) {
     var leaderList by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Fetch data when tab changes
     LaunchedEffect(selectedTab) {
         isLoading = true
         leaderList = if (selectedTab == 0) {
@@ -57,7 +56,6 @@ fun LeaderboardScreen(onBackClick: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Tab Selector
             Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 TabButton(
                     text = "Top 10 Runs",
@@ -74,7 +72,6 @@ fun LeaderboardScreen(onBackClick: () -> Unit) {
                 )
             }
 
-            // Table Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -87,7 +84,6 @@ fun LeaderboardScreen(onBackClick: () -> Unit) {
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.primary)
 
-            // List
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)

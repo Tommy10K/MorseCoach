@@ -55,7 +55,7 @@ class AuthRepository {
     private fun createUserProfile(userId: String, email: String, onResult: (Boolean, String?) -> Unit) {
         val userMap = hashMapOf(
             "email" to email,
-            "username" to email, // Default username is email
+            "username" to email,
             "currentLevelIndex" to 0,
             "completedLessons" to emptyList<String>(),
             "highScore" to 0.0
@@ -68,8 +68,6 @@ class AuthRepository {
                 onResult(true, "Warning: Profile creation failed: ${e.message}")
             }
     }
-
-    // --- New Methods for Profile Screen ---
 
     fun getUserProfile(onResult: (Map<String, Any>?, String?) -> Unit) {
         val userId = auth.currentUser?.uid ?: return

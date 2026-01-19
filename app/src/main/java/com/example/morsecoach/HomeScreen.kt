@@ -50,7 +50,7 @@ fun HomeScreen(
                     Box {
                         IconButton(onClick = {
                             if (isLoggedIn) {
-                                onProfileClick() // Navigate to profile instead of showing menu
+                                onProfileClick()
                             } else {
                                 onLoginClick()
                             }

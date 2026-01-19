@@ -48,7 +48,7 @@ class LessonViewModel : ViewModel() {
         if (userId != null) {
             viewModelScope.launch {
                 repository.markLessonComplete(userId, lessonId)
-                fetchUserProgress() // Refresh progress
+                fetchUserProgress()
             }
         }
     }

@@ -9,7 +9,7 @@ data class Lesson(
     val id: String = "",
     val title: String = "",
     val order: Int = 0,
-    val content: String = "", // Space separated characters e.g. "A B C"
+    val content: String = "",
     val type: String = "learn"
 )
 
@@ -23,7 +23,6 @@ class LessonRepository {
             val snapshot = lessonsCollection.orderBy("order").get().await()
             if (snapshot.isEmpty) {
                 seedLessons()
-                // Fetch again after seeding
                 lessonsCollection.orderBy("order").get().await().toObjects(Lesson::class.java)
             } else {
                 snapshot.toObjects(Lesson::class.java)

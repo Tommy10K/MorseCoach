@@ -15,13 +15,11 @@ import androidx.compose.ui.text.font.FontWeight
 fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
-    // Dependencies
     val authRepo = remember { AuthRepository() }
 
-    // UI State
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var isRegisterMode by remember { mutableStateOf(false) } // Toggle between Login/Register
+    var isRegisterMode by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 

@@ -57,14 +57,11 @@ class ChallengeViewModel : ViewModel() {
         val previousInput = _currentInput.value
         _currentInput.value = input
 
-        // Count only "append" actions as attempts (dit/dah/space buttons).
-        // Backspaces reduce the string and shouldn't penalize accuracy.
         val isAppend = input.length > previousInput.length && input.startsWith(previousInput)
         if (isAppend) {
             totalInputAttempts += 1
         }
         
-        // Check for error immediately (prefix match)
         if (!_targetMorse.value.startsWith(input)) {
             _isError.value = true
             if (isAppend) {
@@ -72,7 +69,6 @@ class ChallengeViewModel : ViewModel() {
             }
         } else {
             _isError.value = false
-            // Check for completion
             if (input == _targetMorse.value) {
                 finishGame()
             }
@@ -86,7 +82,6 @@ class ChallengeViewModel : ViewModel() {
         val durationMinutes = safeDurationSeconds / 60.0
         
         // Standard WPM: (Characters / 5) / Minutes
-        // We use the length of the original text phrase, not the morse code length
         val charCount = _targetPhrase.value.length
         val calculatedWpm = (charCount / 5.0) / durationMinutes
         

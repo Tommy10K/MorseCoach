@@ -37,13 +37,11 @@ class ChallengeRepository {
     
     suspend fun generateChallengePhrase(): String {
         return withContext(Dispatchers.IO) {
-            // 1. Check Key immediately
             if (apiKey.isEmpty() || apiKey == "YOUR_API_KEY_HERE") {
                 return@withContext fallbackPhrases.random()
             }
 
             try {
-                // 2. Attempt API Call
                 val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
@@ -88,13 +86,10 @@ class ChallengeRepository {
                     }
                 }
                 
-                // If we get here, API failed (non-200 or empty JSON)
-                // Log it if you want: Log.e("API", "Failed code: ${connection.responseCode}")
                 return@withContext fallbackPhrases.random()
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // 3. Fallback on ANY exception (No internet, etc)
                 return@withContext fallbackPhrases.random()
             }
         }
@@ -130,7 +125,6 @@ class ChallengeRepository {
 
                 val userRef = db.collection("users").document(userId)
 
-                // Lifetime aggregates (accurate forever, O(1) to read)
                 userRef.set(
                     mapOf(
                         "lifetimeRuns" to FieldValue.increment(1),
@@ -140,7 +134,6 @@ class ChallengeRepository {
                     SetOptions.merge()
                 ).await()
 
-                // Per-user run history (keep newest N docs)
                 val historyRef = userRef.collection("run_history")
                 historyRef.add(
                     mapOf(
@@ -150,7 +143,6 @@ class ChallengeRepository {
                     )
                 ).await()
 
-                // Prune older history docs beyond maxHistory
                 if (maxHistory > 0) {
                     val newest = historyRef
                         .orderBy("timestamp", Query.Direction.DESCENDING)

@@ -2,6 +2,8 @@ package com.example.morsecoach
 
 import android.content.Context
 import android.hardware.camera2.CameraManager
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -223,6 +225,10 @@ fun TranslateScreen(
                             text = { Text("Flash") },
                             onClick = { selectedMethod = "Flash"; isDropdownExpanded = false }
                         )
+                        DropdownMenuItem(
+                            text = { Text("Audio") },
+                            onClick = { selectedMethod = "Audio"; isDropdownExpanded = false }
+                        )
                     }
                 }
             }
@@ -438,6 +444,14 @@ suspend fun transmitMorse(
     val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     val cameraId = try { cameraManager.cameraIdList[0] } catch (e: Exception) { null }
 
+    val toneGenerator = if (method == "Audio") {
+        try {
+            ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
+        } catch (e: Exception) {
+            null
+        }
+    } else null
+
     val DIT = 200L
     val DAH = 600L
     val SYMBOL_SPACE = 200L
@@ -449,11 +463,11 @@ suspend fun transmitMorse(
 
         when (char) {
             '.' -> {
-                performSignal(vibrator, cameraManager, cameraId, method, DIT)
+                performSignal(vibrator, cameraManager, cameraId, toneGenerator, method, DIT)
                 delay(SYMBOL_SPACE)
             }
             '-' -> {
-                performSignal(vibrator, cameraManager, cameraId, method, DAH)
+                performSignal(vibrator, cameraManager, cameraId, toneGenerator, method, DAH)
                 delay(SYMBOL_SPACE)
             }
             ' ' -> {
@@ -464,12 +478,16 @@ suspend fun transmitMorse(
             }
         }
     }
+
+    // Clean up ToneGenerator
+    toneGenerator?.release()
 }
 
 suspend fun performSignal(
     vibrator: Vibrator,
     cameraManager: CameraManager,
     cameraId: String?,
+    toneGenerator: ToneGenerator?,
     method: String,
     duration: Long
 ) {
@@ -481,6 +499,15 @@ suspend fun performSignal(
             cameraManager.setTorchMode(cameraId, true)
             delay(duration)
             cameraManager.setTorchMode(cameraId, false)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            delay(duration)
+        }
+    } else if (method == "Audio" && toneGenerator != null) {
+        try {
+            // Play a tone (800 Hz beep)
+            toneGenerator.startTone(ToneGenerator.TONE_DTMF_1, duration.toInt())
+            delay(duration)
         } catch (e: Exception) {
             e.printStackTrace()
             delay(duration)

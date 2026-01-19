@@ -77,7 +77,6 @@ fun LessonScreen(
                      Text("Lesson not found")
                 }
             } else if (currentStep == null) {
-                // Lesson Complete
                 Text("Lesson Complete!", style = MaterialTheme.typography.headlineLarge)
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(onClick = {
@@ -87,9 +86,8 @@ fun LessonScreen(
                     Text("Finish")
                 }
             } else {
-                // Progress Bar
                 LinearProgressIndicator(
-                    progress = { (currentStepIndex.toFloat() / steps.size) },
+                    progress = (currentStepIndex.toFloat() / steps.size),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(32.dp))
@@ -211,7 +209,6 @@ fun QuizStep(
                 Text("Check")
             }
         } else {
-            // Success State
             Text("Correct!", color = Color.Green, style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(32.dp))
             Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
