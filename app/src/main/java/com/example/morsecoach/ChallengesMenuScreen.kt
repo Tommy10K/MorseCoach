@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChallengesMenuScreen(
-    onChallengeClick: () -> Unit,
+    onRacerClick: () -> Unit,
+    onKeyerClick: () -> Unit,
     onLeaderboardClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -57,7 +58,7 @@ fun ChallengesMenuScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = onChallengeClick,
+                onClick = onRacerClick,
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(80.dp),
@@ -66,11 +67,44 @@ fun ChallengesMenuScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text(
-                    text = "Challenge Mode",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Racer Mode",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Speed challenge with Dit/Dah buttons",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onKeyerClick,
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .height(80.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Keyer Mode",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Realistic single-key input",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -92,13 +92,59 @@ fun AppNavigation() {
             LearnMenuScreen(
                 onGlossaryClick = { navController.navigate("glossary") },
                 onLessonsClick = { navController.navigate("lesson_list") },
+                onPracticeClick = { navController.navigate("practice") },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("practice") {
+            PracticeMenuScreen(
+                onStandardClick = { navController.navigate("practice_standard") },
+                onReverseClick = { navController.navigate("practice_reverse") },
+                onListeningClick = { navController.navigate("practice_listening") },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable("practice_standard") {
+            PracticeScreen(
+                onCharacterClick = { char ->
+                    navController.navigate("practice_quiz/$char/false")
+                },
+                onRandomClick = {
+                    navController.navigate("practice_quiz/_/true")
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable("practice_reverse") {
+            ReversePracticeScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable("practice_listening") {
+            ListeningPracticeScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("practice_quiz/{char}/{isRandom}") { backStackEntry ->
+            val charArg = backStackEntry.arguments?.getString("char")
+            val isRandom = backStackEntry.arguments?.getString("isRandom") == "true"
+            val character = if (charArg != "_" && !charArg.isNullOrEmpty()) charArg[0] else null
+            PracticeQuizScreen(
+                character = character,
+                isRandomMode = isRandom,
                 onBackClick = { navController.popBackStack() }
             )
         }
 
         composable("challenges_menu") {
             ChallengesMenuScreen(
-                onChallengeClick = { navController.navigate("challenge") },
+                onRacerClick = { navController.navigate("challenge") },
+                onKeyerClick = { navController.navigate("keyer_challenge") },
                 onLeaderboardClick = { navController.navigate("leaderboard") },
                 onBackClick = { navController.popBackStack() }
             )
@@ -106,6 +152,12 @@ fun AppNavigation() {
 
         composable("challenge") {
             ChallengeScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("keyer_challenge") {
+            KeyerChallengeScreen(
                 onBackClick = { navController.popBackStack() }
             )
         }

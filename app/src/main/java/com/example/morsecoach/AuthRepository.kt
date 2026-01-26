@@ -58,7 +58,13 @@ class AuthRepository {
             "username" to email,
             "currentLevelIndex" to 0,
             "completedLessons" to emptyList<String>(),
-            "highScore" to 0.0
+            "highScore" to 0.0,
+            "keyerRelaxedCompletions" to 0,
+            "keyerNormalCompletions" to 0,
+            "keyerFastCompletions" to 0,
+            "practiceHighStreak" to 0,
+            "reverseHighStreak" to 0,
+            "listeningHighStreak" to 0
         )
 
         db.collection("users").document(userId)
@@ -97,5 +103,69 @@ class AuthRepository {
         user.updatePassword(newPass)
             .addOnSuccessListener { onResult(true, null) }
             .addOnFailureListener { e -> onResult(false, e.message) }
+    }
+
+    suspend fun incrementKeyerCompletion(difficulty: String) {
+        val userId = auth.currentUser?.uid ?: return
+        val fieldName = when(difficulty.uppercase()) {
+            "RELAXED" -> "keyerRelaxedCompletions"
+            "NORMAL" -> "keyerNormalCompletions"
+            "FAST" -> "keyerFastCompletions"
+            else -> return
+        }
+        try {
+            db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener { doc ->
+                    val current = (doc.get(fieldName) as? Number)?.toInt() ?: 0
+                    db.collection("users").document(userId)
+                        .update(fieldName, current + 1)
+                }
+        } catch (_: Exception) { }
+    }
+
+    suspend fun updatePracticeHighStreak(newStreak: Int) {
+        val userId = auth.currentUser?.uid ?: return
+        try {
+            db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener { doc ->
+                    val currentHigh = (doc.get("practiceHighStreak") as? Number)?.toInt() ?: 0
+                    if (newStreak > currentHigh) {
+                        db.collection("users").document(userId)
+                            .update("practiceHighStreak", newStreak)
+                    }
+                }
+        } catch (_: Exception) { }
+    }
+
+    suspend fun updateReverseHighStreak(newStreak: Int) {
+        val userId = auth.currentUser?.uid ?: return
+        try {
+            db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener { doc ->
+                    val currentHigh = (doc.get("reverseHighStreak") as? Number)?.toInt() ?: 0
+                    if (newStreak > currentHigh) {
+                        db.collection("users").document(userId)
+                            .update("reverseHighStreak", newStreak)
+                    }
+                }
+        } catch (_: Exception) { }
+    }
+
+    suspend fun updateListeningHighStreak(newStreak: Int) {
+        val userId = auth.currentUser?.uid ?: return
+        try {
+            db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener { doc ->
+                    val currentHigh = (doc.get("listeningHighStreak") as? Number)?.toInt() ?: 0
+                    if (newStreak > currentHigh) {
+                        db.collection("users").document(userId)
+                            .update("listeningHighStreak", newStreak)
+                    }
+                }
+        } catch (_: Exception) { }
     }
 }

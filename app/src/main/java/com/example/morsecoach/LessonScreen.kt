@@ -143,8 +143,12 @@ fun TeachStep(
         Spacer(modifier = Modifier.height(32.dp))
         
         Button(onClick = {
+            // Play both audio and vibration simultaneously
             scope.launch {
                 transmitMorse(context, code, "Vibrate") { }
+            }
+            scope.launch {
+                transmitMorse(context, code, "Audio") { }
             }
         }) {
             Text("Play Sound/Vibration")

@@ -25,14 +25,35 @@ class ChallengeRepository {
     private val auth = FirebaseAuth.getInstance()
 
     private val fallbackPhrases = listOf(
+        // Short phrases (2-3 words)
+        "SOS",
+        "HI THERE",
+        "HELLO WORLD",
+        "CQ CQ CQ",
+        "GOOD MORNING",
+        "THANK YOU",
+        "WELL DONE",
+        "COPY THAT",
+        "ROGER THAT",
+        "OVER AND OUT",
+        // Medium phrases
         "SOS TITANIC",
         "THE QUICK BROWN FOX",
         "MORSE CODE IS FUN",
         "RADIO SILENCE",
-        "DIT DAH DIT",
-        "HELP ME",
         "CALL FOR HELP",
-        "PARIS PARIS PARIS PARIS"
+        "SEND BACKUP NOW",
+        "MESSAGE RECEIVED",
+        "STAND BY PLEASE",
+        "REPEAT LAST MESSAGE",
+        // Classic/Historic
+        "WHAT HATH GOD WROUGHT",
+        "COME HERE WATSON",
+        "PARIS PARIS PARIS",
+        // Ham radio
+        "QTH IS HOME",
+        "RST FIVE NINE",
+        "SEVENTY THREE"
     )
     
     suspend fun generateChallengePhrase(): String {
@@ -95,7 +116,7 @@ class ChallengeRepository {
         }
     }
 
-    suspend fun submitScore(wpm: Double, accuracy: Double = 100.0, maxHistory: Int = 20) {
+    suspend fun submitScore(wpm: Double, accuracy: Double = 100.0, maxHistory: Int = 10) {
         val user = auth.currentUser ?: return
         val userId = user.uid
         val timestamp = Timestamp.now()
@@ -236,6 +257,33 @@ class ChallengeRepository {
             } catch (e: Exception) {
                 e.printStackTrace()
                 emptyList()
+            }
+        }
+    }
+
+    suspend fun updateUsernameInLeaderboards(newUsername: String) {
+        val userId = auth.currentUser?.uid ?: return
+        
+        withContext(Dispatchers.IO) {
+            try {
+                // Update all runs in leaderboard_runs for this user
+                val runsQuery = db.collection("leaderboard_runs")
+                    .whereEqualTo("userId", userId)
+                    .get()
+                    .await()
+                
+                for (doc in runsQuery.documents) {
+                    doc.reference.update("username", newUsername).await()
+                }
+                
+                // Update the user's PB entry in leaderboard_pbs
+                val pbRef = db.collection("leaderboard_pbs").document(userId)
+                val pbDoc = pbRef.get().await()
+                if (pbDoc.exists()) {
+                    pbRef.update("username", newUsername).await()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

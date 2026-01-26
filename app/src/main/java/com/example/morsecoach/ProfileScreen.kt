@@ -25,7 +25,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -58,11 +60,18 @@ fun ProfileScreen(
     var pbWpm by remember { mutableStateOf<Double?>(null) }
     var lessonsCompletedCount by remember { mutableStateOf(0) }
 
-    var last20AvgWpm by remember { mutableStateOf<Double?>(null) }
-    var last20AvgAccuracy by remember { mutableStateOf<Double?>(null) }
+    var last10AvgWpm by remember { mutableStateOf<Double?>(null) }
+    var last10AvgAccuracy by remember { mutableStateOf<Double?>(null) }
     var lifetimeAvgWpm by remember { mutableStateOf<Double?>(null) }
     var lifetimeAvgAccuracy by remember { mutableStateOf<Double?>(null) }
     var lifetimeRuns by remember { mutableStateOf<Long?>(null) }
+    
+    var keyerRelaxed by remember { mutableStateOf(0) }
+    var keyerNormal by remember { mutableStateOf(0) }
+    var keyerFast by remember { mutableStateOf(0) }
+    var practiceStreak by remember { mutableStateOf(0) }
+    var reverseStreak by remember { mutableStateOf(0) }
+    var listeningStreak by remember { mutableStateOf(0) }
 
     // Load initial data
     LaunchedEffect(uid) {
@@ -93,12 +102,20 @@ fun ProfileScreen(
                         lifetimeAvgWpm = null
                         lifetimeAvgAccuracy = null
                     }
+                    
+                    // Load keyer and practice stats
+                    keyerRelaxed = (data["keyerRelaxedCompletions"] as? Number)?.toInt() ?: 0
+                    keyerNormal = (data["keyerNormalCompletions"] as? Number)?.toInt() ?: 0
+                    keyerFast = (data["keyerFastCompletions"] as? Number)?.toInt() ?: 0
+                    practiceStreak = (data["practiceHighStreak"] as? Number)?.toInt() ?: 0
+                    reverseStreak = (data["reverseHighStreak"] as? Number)?.toInt() ?: 0
+                    listeningStreak = (data["listeningHighStreak"] as? Number)?.toInt() ?: 0
                 }
 
                 val historySnap = db.collection("users").document(uid)
                     .collection("run_history")
                     .orderBy("timestamp", Query.Direction.DESCENDING)
-                    .limit(20)
+                    .limit(10)
                     .get()
                     .await()
 
@@ -111,11 +128,11 @@ fun ProfileScreen(
                 if (history.isNotEmpty()) {
                     val avgWpm = history.map { it.first }.average()
                     val avgAcc = history.map { it.second }.average()
-                    last20AvgWpm = kotlin.math.round(avgWpm * 10) / 10.0
-                    last20AvgAccuracy = kotlin.math.round(avgAcc * 10) / 10.0
+                    last10AvgWpm = kotlin.math.round(avgWpm * 10) / 10.0
+                    last10AvgAccuracy = kotlin.math.round(avgAcc * 10) / 10.0
                 } else {
-                    last20AvgWpm = null
-                    last20AvgAccuracy = null
+                    last10AvgWpm = null
+                    last10AvgAccuracy = null
                 }
             } catch (_: Exception) {
                 // Keep stats as null/0 if fetch fails.
@@ -163,10 +180,10 @@ fun ProfileScreen(
                 ?.let { String.format(Locale.US, "%.1f", it) }
                 ?: "—"
 
-            val last20WpmText = last20AvgWpm
+            val last10WpmText = last10AvgWpm
                 ?.let { String.format(Locale.US, "%.1f", it) }
                 ?: "—"
-            val last20AccText = last20AvgAccuracy
+            val last10AccText = last10AvgAccuracy
                 ?.let { String.format(Locale.US, "%.1f", it) }
                 ?: "—"
 
@@ -187,13 +204,32 @@ fun ProfileScreen(
             )
 
             Text(
-                text = "Last 20 Avg: $last20WpmText WPM • $last20AccText% accuracy",
+                text = "Last 10 Avg: $last10WpmText WPM • $last10AccText% accuracy",
                 modifier = Modifier.fillMaxWidth()
             )
 
             val runsText = lifetimeRuns?.toString() ?: "—"
             Text(
                 text = "Lifetime Avg: $lifetimeWpmText WPM • $lifetimeAccText% accuracy ($runsText runs)",
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Keyer mode stats
+            Text(
+                text = "Keyer Completions: Relaxed $keyerRelaxed • Normal $keyerNormal • Fast $keyerFast",
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // Practice high streaks
+            Text(
+                text = "Practice High Streaks:",
+                modifier = Modifier.fillMaxWidth(),
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "  Standard: $practiceStreak • Reverse: $reverseStreak • Listening: $listeningStreak",
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -230,6 +266,9 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Update Button
+            val scope = rememberCoroutineScope()
+            val challengeRepo = remember { ChallengeRepository() }
+            
             Button(
                 onClick = {
                     isLoading = true
@@ -238,7 +277,14 @@ fun ProfileScreen(
                     // Logic to update fields
                     if (username.isNotBlank()) {
                         authRepo.updateUsername(username) { success, err ->
-                            if (!success) message = "Username update failed: $err"
+                            if (!success) {
+                                message = "Username update failed: $err"
+                            } else {
+                                // Also update username in all leaderboard entries
+                                scope.launch {
+                                    challengeRepo.updateUsernameInLeaderboards(username)
+                                }
+                            }
                         }
                     }
 

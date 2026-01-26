@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 fun LearnMenuScreen(
     onGlossaryClick: () -> Unit,
     onLessonsClick: () -> Unit,
+    onPracticeClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Scaffold(
@@ -66,11 +67,44 @@ fun LearnMenuScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text(
-                    text = "Lessons",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Lessons",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Structured learning path",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onPracticeClick,
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .height(80.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Practice",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Test yourself on any character",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -85,11 +119,18 @@ fun LearnMenuScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text(
-                    text = "Glossary (Alphabet)",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Glossary",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "View all Morse codes",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
