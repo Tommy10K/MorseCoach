@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -44,6 +45,7 @@ fun AppNavigation() {
     val auth = remember { FirebaseAuth.getInstance() }
 
     var currentUser by remember { mutableStateOf<FirebaseUser?>(auth.currentUser) }
+    val socialViewModel: SocialViewModel = viewModel()
 
     DisposableEffect(auth) {
         val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
@@ -77,6 +79,9 @@ fun AppNavigation() {
                 },
                 onChallengesClick = {
                     navController.navigate("challenges_menu")
+                },
+                onSocialClick = {
+                    navController.navigate("social")
                 },
                 onLoginClick = {
                     navController.navigate("login")
@@ -194,7 +199,16 @@ fun AppNavigation() {
                 },
                 onBackClick = {
                     navController.popBackStack()
+                },
+                onStatsClick = {
+                    navController.navigate("stats")
                 }
+            )
+        }
+
+        composable("stats") {
+            StatsScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
 
@@ -208,6 +222,29 @@ fun AppNavigation() {
 
         composable("leaderboard") {
             LeaderboardScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("social") {
+            SocialScreen(
+                viewModel = socialViewModel,
+                onBackClick = { navController.popBackStack() },
+                onOpenChat = { chatId, otherUid, otherUsername ->
+                    navController.navigate("chat/$chatId/$otherUid/$otherUsername")
+                }
+            )
+        }
+
+        composable("chat/{chatId}/{otherUid}/{otherUsername}") { backStackEntry ->
+            val chatId = backStackEntry.arguments?.getString("chatId") ?: return@composable
+            val otherUid = backStackEntry.arguments?.getString("otherUid") ?: return@composable
+            val otherUsername = backStackEntry.arguments?.getString("otherUsername") ?: "Chat"
+            ChatScreen(
+                chatId = chatId,
+                otherUid = otherUid,
+                otherUsername = otherUsername,
+                viewModel = socialViewModel,
                 onBackClick = { navController.popBackStack() }
             )
         }

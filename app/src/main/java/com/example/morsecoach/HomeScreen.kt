@@ -37,6 +37,7 @@ fun HomeScreen(
     onLearnClick: () -> Unit,
     onTranslateClick: () -> Unit,
     onChallengesClick: () -> Unit,
+    onSocialClick: () -> Unit,
     onLoginClick: () -> Unit,
     onProfileClick: () -> Unit // Renamed from onLogoutClick
 ) {
@@ -143,6 +144,31 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    if (isLoggedIn) {
+                        onSocialClick()
+                    } else {
+                        onLoginClick()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .height(60.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = if (isLoggedIn) "Social" else "Log In for Social",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -156,6 +182,7 @@ fun HomePreview() {
             onLearnClick = {},
             onTranslateClick = {},
             onChallengesClick = {},
+            onSocialClick = {},
             onLoginClick = {},
             onProfileClick = {}
         )

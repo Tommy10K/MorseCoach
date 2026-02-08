@@ -1,4 +1,4 @@
-MorseCoach Project Specification
+MorseCoach Project Specification (Current State)
 
 1. Project Overview
 
@@ -6,147 +6,209 @@ Name: MorseCoach
 Platform: Android (Min SDK 26, Target SDK 36)
 Language: Kotlin
 UI Framework: Jetpack Compose (Material3)
-Architecture: Single Activity (MainActivity), Navigation Component (NavHost).
+Architecture: Single Activity (MainActivity) + Navigation Compose (NavHost).
+State/Logic: MVVM-style ViewModels + repositories + Compose state.
 Backend: Firebase (Authentication, Firestore).
 
 2. Core Purpose
 
-An educational Android application designed to teach Morse code via "Duolingo-style" gamified lessons, while providing utility tools for translating text-to-morse and transmitting it via device hardware (vibration/flashlight).
+Educational app for learning and practicing Morse code with gamified lessons, realistic input modes, and utility tools to translate and transmit Morse via device hardware (audio, vibration, flashlight).
 
-3. Tech Stack & Libraries
+3. App Navigation (Routes)
 
-Build System: Gradle (Kotlin DSL).
+MainActivity hosts a single NavHost. Current routes:
+- home
+- login
+- learn_menu
+- lesson_list
+- lesson/{lessonId}
+- glossary
+- practice (Practice Menu)
+- practice_standard
+- practice_quiz/{char}/{isRandom}
+- practice_reverse
+- practice_listening
+- challenges_menu
+- challenge (Racer mode)
+- keyer_challenge (Keyer mode)
+- leaderboard
+- translate
+- profile
 
-Navigation: androidx.navigation:navigation-compose.
+4. Tech Stack & Libraries
 
-Async: Kotlin Coroutines (suspend functions, viewModelScope equivalent via rememberCoroutineScope).
-
+Build System: Gradle (Kotlin DSL)
+Navigation: androidx.navigation:navigation-compose
+Async: Kotlin Coroutines (suspend, viewModelScope, rememberCoroutineScope)
 Firebase:
+- firebase-auth (email/password)
+- firebase-firestore (progress, stats, leaderboards, lessons)
+Hardware:
+- VibratorManager / Vibrator (haptic)
+- CameraManager (flashlight)
+- ToneGenerator (audio beeps)
+Optional AI: Gemini API for generating Racer challenge phrases (BuildConfig.GEMINI_API_KEY).
 
-firebase-auth: Email/Password authentication.
+5. UI/UX Design System
 
-firebase-firestore: User progress and lesson content storage.
-
-Hardware Access:
-
-VibratorManager / Vibrator (Haptic feedback).
-
-CameraManager (Flashlight/Torch).
-
-4. UI/UX Design System
-
-Theme: "Modern Military".
-
-Colors:
-
+Theme: "Modern Military"
 Primary: Military Green (#5A6640)
-
 Background: Dark (#1B1C18)
-
 Text: Off-White (#F0F0F0)
+Components: large touch targets, Dit/Dah buttons, display cards, progress bars, animated feedback.
 
-Error: Red (Standard Material Error)
-
-Components: Large touch targets, custom DisplayCard for text output, specific "Dit" (Dot) and "Dah" (Dash) buttons.
-
-5. Data Structures
-
-5.1 Local Data (MorseData.kt)
-
-letterToCode: Map<Char, String> (A -> ".-")
-
-codeToLetter: Map<String, Char> ( ".-" -> A)
-
-5.2 Firestore Schema
-
-Collection: users
-
-docId: Firebase Auth UID
-
-email: String
-
-username: String
-
-currentLevelIndex: Integer
-
-completedLessons: List<String> (IDs of completed lessons)
-
-highScore: Integer
-
-Collection: lessons (To Be Implemented)
-
-docId: String (e.g., "lesson_01")
-
-title: String (e.g., "Basic Vowels")
-
-order: Integer (1, 2, 3...)
-
-content: String (The characters/words to teach, e.g., "E T A")
-
-type: String ("learn" or "quiz")
-
-6. Current Feature Implementation Status
+6. Feature Set (Current)
 
 6.1 Authentication (AuthRepository.kt, LoginScreen.kt)
+- Email/Password login
+- Registration with auto profile creation
+- Auth state listener in MainActivity
 
-[x] Email/Password Login.
+6.2 Home & Menus
+- Home screen with entry points: Learn, Translate, Challenges, Profile, Login
+- Learn menu: Lessons, Practice, Glossary
+- Challenges menu: Racer Mode, Keyer Mode, Leaderboard
+- Practice menu: Standard, Reverse, Listening
 
-[x] Registration with auto-profile creation in Firestore.
+6.3 Lessons (LessonListScreen.kt, LessonScreen.kt, LessonRepository.kt, LessonViewModel.kt)
+- Lesson list with lock/unlock based on previous completion
+- Lesson flow with Teach and Quiz steps for each character
+- Teach step plays BOTH audio + vibration simultaneously
+- Quiz step uses Dit/Dah buttons with correctness checks
+- Lessons are seeded into Firestore on first load if missing
+- Completion stored in users.completedLessons
 
-[x] Auth state listener in MainActivity.
+6.4 Practice (PracticeMenuScreen.kt, PracticeScreen.kt, PracticeQuizScreen.kt)
+- Standard Practice: select character or random practice
+- Quiz UI with hidden answer and hint button
+- Streak system for random practice only (no hint + correct)
+- Hint breaks streak and sets streak to 0
+- Try again message clears input
+- High streak persisted in users.practiceHighStreak
 
-6.2 Profile (ProfileScreen.kt)
+6.5 Reverse Practice (ReversePracticeScreen.kt)
+- Shows Morse code, user selects correct letter from grid
+- Hint reveals answer and breaks streak
+- Streak resets on wrong answer
+- High streak persisted in users.reverseHighStreak
 
-[x] Edit Username.
+6.6 Listening Practice (ListeningPracticeScreen.kt)
+- 3-phase flow: Listen -> Type Morse -> Guess Letter
+- Audio playback with replay button (user-controlled)
+- Hint reveals Morse answer and breaks streak
+- Streak increments only if Morse + letter correct without hint
+- High streak persisted in users.listeningHighStreak
 
-[x] Update Password.
+6.7 Translate & Transmit (TranslateScreen.kt)
+- Bi-directional Text <-> Morse conversion
+- Morse input UI with Dit/Dah, letter/word space, smart backspace
+- Transmission via Vibrate / Flash / Audio
+- Visual highlighting of current symbol during transmission
+- Stop button for active transmission
 
-[x] Logout functionality.
+6.8 Racer Mode (ChallengeScreen.kt, ChallengeViewModel.kt, ChallengeRepository.kt)
+- Generates phrases (Gemini or fallback list)
+- Measures WPM and accuracy based on input attempts
+- Submits runs to leaderboards
+- Stores lifetime stats and run history
 
-6.3 Translation & Transmission (TranslateScreen.kt)
+6.9 Keyer Mode (KeyerChallengeScreen.kt)
+- Realistic single-key input using press duration thresholds
+- Difficulty modes: Relaxed / Normal / Fast
+- Phrase list shared with Racer mode
+- Audio feedback while key is pressed
+- Letter/word space detection with animated indicators
+- Completion increments counters in:
+  - users.keyerRelaxedCompletions
+  - users.keyerNormalCompletions
+  - users.keyerFastCompletions
 
-[x] Bi-directional Translation: Real-time conversion between Text and Morse.
+6.10 Leaderboards (LeaderboardScreen.kt)
+- Top 10 runs (by WPM)
+- Global PBs (per-user personal bests)
+- Highlights current user
 
-[x] Inputs:
+6.11 Profile & Stats (ProfileScreen.kt)
+- Edit username and password
+- Username syncs leaderboard entries
+- Stats:
+  - Personal best WPM
+  - Lessons completed
+  - Last 10 runs average WPM and accuracy
+  - Lifetime average WPM and accuracy + total runs
+  - Keyer completions (Relaxed/Normal/Fast)
+  - Practice high streaks (Standard/Reverse/Listening)
 
-Text Mode: Standard keyboard.
+7. Data Structures
 
-Morse Mode: Custom UI with Dit, Dah, Letter Space, Word Space, Backspace.
+7.1 Local Data (MorseData.kt)
+- letterToCode: Map<Char, String>
+- codeToLetter: Map<String, Char>
 
-[x] Hardware Transmission:
+7.2 Firestore Schema (Current)
 
-Vibrate (using VibrationEffect).
+Collection: users (docId = Firebase Auth UID)
+- email: String
+- username: String
+- currentLevelIndex: Int (legacy, not actively used)
+- completedLessons: List<String>
+- highScore: Double (PB WPM)
+- lifetimeRuns: Long
+- lifetimeWpmSum: Double
+- lifetimeAccuracySum: Double
+- keyerRelaxedCompletions: Int
+- keyerNormalCompletions: Int
+- keyerFastCompletions: Int
+- practiceHighStreak: Int
+- reverseHighStreak: Int
+- listeningHighStreak: Int
 
-Flash (using CameraManager.setTorchMode).
+Subcollection: users/{uid}/run_history
+- wpm: Double
+- accuracy: Double
+- timestamp: Timestamp
 
-[x] Visual Feedback: Highlighting of active character during transmission.
+Collection: leaderboard_runs
+- userId: String
+- username: String
+- wpm: Double
+- accuracy: Double
+- timestamp: Timestamp
 
-[x] Concurrency: Coroutine-based transmission with "Stop" cancellation support.
+Collection: leaderboard_pbs (docId = userId)
+- userId: String
+- username: String
+- wpm: Double
+- accuracy: Double
+- timestamp: Timestamp
 
-6.4 Learning (HomeScreen.kt, LearnMenuScreen.kt, GlossaryScreen.kt)
+Collection: lessons
+- id: String
+- title: String
+- order: Int
+- content: String (space-separated characters)
+- type: String ("learn" or "quiz")
 
-[x] Glossary: Grid view of all characters; clicking shows Morse code in dialog.
+8. Security & Permissions
 
-[x] Menu: Selection between Glossary and Lessons.
+Android Manifest:
+- android.permission.VIBRATE
+- android.permission.CAMERA
+- uses-feature camera (not required)
 
-[ ] Lessons: Not yet implemented. Logic needs to fetch lessons collection and track progress in users collection.
+Git:
+- google-services.json is ignored
 
-7. Security & Permissions
+9. Known Constraints / Design Notes
 
-Manifest:
+- Translate screen limits text input length to 20 characters in Text mode.
+- Practice streaks only increment without hints; hints reset streaks.
+- Keyer mode uses timing thresholds per difficulty for dit/dah detection.
+- Phrase generation uses Gemini if API key exists, otherwise fallback list.
 
-android.permission.VIBRATE
+10. Next Steps / Ideas (Optional)
 
-android.permission.CAMERA
-
-<uses-feature android:name="android.hardware.camera" android:required="false" />
-
-Git: google-services.json is ignored.
-
-8. Next Steps for AI Agent
-
-Implement LessonRepository to fetch data from Firestore.
-
-Create LessonScreen UI to handle teaching logic (displaying characters, verifying user input).
-
-Implement progress tracking (updating currentLevelIndex in Firestore).
+- Persist practice mastery per character (practiceProgress currently in-memory).
+- Add analytics or session summaries for practice modes.
+- Expand lesson content beyond seed set.
+- Add spaced repetition or adaptive difficulty for practice.

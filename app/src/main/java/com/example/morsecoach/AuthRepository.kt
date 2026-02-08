@@ -56,6 +56,7 @@ class AuthRepository {
         val userMap = hashMapOf(
             "email" to email,
             "username" to email,
+            "usernameLower" to email.lowercase(),
             "currentLevelIndex" to 0,
             "completedLessons" to emptyList<String>(),
             "highScore" to 0.0,
@@ -93,7 +94,10 @@ class AuthRepository {
     fun updateUsername(newUsername: String, onResult: (Boolean, String?) -> Unit) {
         val userId = auth.currentUser?.uid ?: return
         db.collection("users").document(userId)
-            .update("username", newUsername)
+            .update(
+                "username", newUsername,
+                "usernameLower", newUsername.lowercase()
+            )
             .addOnSuccessListener { onResult(true, null) }
             .addOnFailureListener { e -> onResult(false, e.message) }
     }
