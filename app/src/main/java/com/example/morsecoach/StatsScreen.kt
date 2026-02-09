@@ -68,6 +68,9 @@ fun StatsScreen(onBackClick: () -> Unit) {
     var keyerNormal by remember { mutableStateOf(0) }
     var keyerFast by remember { mutableStateOf(0) }
 
+    // Daily challenge stats
+    var dailyChallengeStreak by remember { mutableStateOf(0) }
+
     // Practice stats
     var lessonsCompletedCount by remember { mutableStateOf(0) }
     var practiceStreak by remember { mutableStateOf(0) }
@@ -96,6 +99,8 @@ fun StatsScreen(onBackClick: () -> Unit) {
                 keyerRelaxed = (data["keyerRelaxedCompletions"] as? Number)?.toInt() ?: 0
                 keyerNormal = (data["keyerNormalCompletions"] as? Number)?.toInt() ?: 0
                 keyerFast = (data["keyerFastCompletions"] as? Number)?.toInt() ?: 0
+
+                dailyChallengeStreak = (data["dailyChallengeStreak"] as? Number)?.toInt() ?: 0
 
                 practiceStreak = (data["practiceHighStreak"] as? Number)?.toInt() ?: 0
                 reverseStreak = (data["reverseHighStreak"] as? Number)?.toInt() ?: 0
@@ -157,6 +162,15 @@ fun StatsScreen(onBackClick: () -> Unit) {
                 StatRow("Lifetime Avg WPM", formatWpm(lifetimeAvgWpm))
                 StatRow("Lifetime Avg Accuracy", formatPct(lifetimeAvgAccuracy))
                 StatRow("Total Runs", lifetimeRuns?.toString() ?: "—")
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── Daily Challenge Section ───────────────────────────────
+            StatsSectionHeader(title = "📅  Daily Challenge")
+
+            StatsCard {
+                StatRow("Current Streak", "🔥 $dailyChallengeStreak")
             }
 
             Spacer(modifier = Modifier.height(20.dp))

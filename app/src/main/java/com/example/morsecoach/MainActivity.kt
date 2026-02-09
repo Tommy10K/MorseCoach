@@ -107,6 +107,7 @@ fun AppNavigation() {
                 onStandardClick = { navController.navigate("practice_standard") },
                 onReverseClick = { navController.navigate("practice_reverse") },
                 onListeningClick = { navController.navigate("practice_listening") },
+                onTargetedClick = { navController.navigate("practice_targeted") },
                 onBackClick = { navController.popBackStack() }
             )
         }
@@ -135,6 +136,12 @@ fun AppNavigation() {
             )
         }
 
+        composable("practice_targeted") {
+            TargetedPracticeScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         composable("practice_quiz/{char}/{isRandom}") { backStackEntry ->
             val charArg = backStackEntry.arguments?.getString("char")
             val isRandom = backStackEntry.arguments?.getString("isRandom") == "true"
@@ -148,9 +155,16 @@ fun AppNavigation() {
 
         composable("challenges_menu") {
             ChallengesMenuScreen(
+                onDailyClick = { navController.navigate("daily_challenge") },
                 onRacerClick = { navController.navigate("challenge") },
                 onKeyerClick = { navController.navigate("keyer_challenge") },
                 onLeaderboardClick = { navController.navigate("leaderboard") },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("daily_challenge") {
+            DailyChallengeScreen(
                 onBackClick = { navController.popBackStack() }
             )
         }

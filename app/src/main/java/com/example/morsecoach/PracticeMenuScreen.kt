@@ -26,6 +26,7 @@ fun PracticeMenuScreen(
     onStandardClick: () -> Unit,
     onReverseClick: () -> Unit,
     onListeningClick: () -> Unit,
+    onTargetedClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Scaffold(
@@ -80,6 +81,14 @@ fun PracticeMenuScreen(
                 description = "Hear Morse audio, type what you hear, then guess the letter",
                 emoji = "🎧",
                 onClick = onListeningClick
+            )
+            
+            // Targeted Mode
+            PracticeModeCard(
+                title = "Targeted Practice",
+                description = "Focus on your weakest characters based on past mistakes",
+                emoji = "🎯",
+                onClick = onTargetedClick
             )
             
             Spacer(modifier = Modifier.weight(1f))

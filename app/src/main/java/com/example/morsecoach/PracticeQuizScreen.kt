@@ -47,6 +47,9 @@ fun PracticeQuizScreen(
     var streak by remember { mutableIntStateOf(0) }
     var showStreakAnimation by remember { mutableStateOf(false) }
     
+    // Timing for charStats
+    var promptStartMs by remember { mutableStateOf(System.currentTimeMillis()) }
+    
     // Reset function for next character
     fun nextCharacter() {
         if (isRandomMode) {
@@ -60,12 +63,20 @@ fun PracticeQuizScreen(
         userInput = ""
         showHint = false
         isCorrect = null
+        promptStartMs = System.currentTimeMillis()
     }
     
     // Check answer
     fun checkAnswer() {
         val correct = userInput.trim() == correctMorse
         isCorrect = correct
+        
+        // Record char stats for targeted practice
+        val elapsed = System.currentTimeMillis() - promptStartMs
+        scope.launch {
+            authRepo.recordCharAttempt(currentChar, correct, elapsed)
+        }
+        
         if (correct) {
             // Only increment streak if in random mode and hint wasn't shown
             if (isRandomMode && !showHint) {

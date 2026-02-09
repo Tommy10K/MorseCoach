@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 
 class ChallengeViewModel : ViewModel() {
     private val repository = ChallengeRepository()
+    private val authRepo = AuthRepository()
 
     private val _targetPhrase = MutableStateFlow("")
     val targetPhrase: StateFlow<String> = _targetPhrase.asStateFlow()
@@ -34,6 +35,12 @@ class ChallengeViewModel : ViewModel() {
     private var totalInputAttempts: Int = 0
     private var incorrectAttempts: Int = 0
 
+    // Per-character error tracking for charStats
+    // Maps each letter in the phrase to whether it had an error
+    private val charErrors = mutableSetOf<Int>()  // indices into targetPhrase with errors
+    private var charStartTimes = mutableListOf<Long>() // start time per morse-letter segment
+    private var currentCharIndex = 0  // which letter we're currently on in the morse
+
     fun startNewGame() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -49,6 +56,11 @@ class ChallengeViewModel : ViewModel() {
             _targetMorse.value = convertToMorse(phrase)
             
             startTime = System.currentTimeMillis()
+            charErrors.clear()
+            currentCharIndex = 0
+            // Build per-letter start times array
+            charStartTimes = MutableList(phrase.replace(" ", "").length) { 0L }
+            if (charStartTimes.isNotEmpty()) charStartTimes[0] = System.currentTimeMillis()
             _isLoading.value = false
         }
     }
@@ -66,9 +78,19 @@ class ChallengeViewModel : ViewModel() {
             _isError.value = true
             if (isAppend) {
                 incorrectAttempts += 1
+                // Mark current letter index as having an error
+                charErrors.add(currentCharIndex)
             }
         } else {
             _isError.value = false
+            
+            // Track which letter we've moved to by counting complete letter separators
+            val lettersCompleted = countCompletedLetters(input)
+            if (lettersCompleted > currentCharIndex && lettersCompleted < charStartTimes.size) {
+                currentCharIndex = lettersCompleted
+                charStartTimes[currentCharIndex] = System.currentTimeMillis()
+            }
+            
             if (input == _targetMorse.value) {
                 finishGame()
             }
@@ -99,6 +121,21 @@ class ChallengeViewModel : ViewModel() {
             hasSubmittedScore = true
             viewModelScope.launch {
                 repository.submitScore(finalWpm, accuracy)
+                
+                // Record per-character stats
+                val phrase = _targetPhrase.value.uppercase().replace(" ", "")
+                val now = System.currentTimeMillis()
+                for (i in phrase.indices) {
+                    val ch = phrase[i]
+                    if (!ch.isLetter()) continue
+                    val hadError = charErrors.contains(i)
+                    val charTime = if (i + 1 < charStartTimes.size) {
+                        charStartTimes[i + 1] - charStartTimes[i]
+                    } else {
+                        now - charStartTimes.getOrElse(i) { startTime }
+                    }
+                    authRepo.recordCharAttempt(ch, !hadError, charTime.coerceAtLeast(0))
+                }
             }
         }
     }
@@ -107,5 +144,27 @@ class ChallengeViewModel : ViewModel() {
         return text.trim().uppercase().split(" ").joinToString(" / ") { word ->
             word.map { char -> MorseData.letterToCode[char] ?: "" }.joinToString(" ")
         }
+    }
+
+    /**
+     * Count how many letter-separators (" ") have been completed in the input.
+     * This tells us which letter index the user is currently typing.
+     */
+    private fun countCompletedLetters(input: String): Int {
+        if (input.isEmpty()) return 0
+        var count = 0
+        var i = 0
+        while (i < input.length) {
+            if (input.startsWith(" / ", i)) {
+                count++
+                i += 3
+            } else if (input[i] == ' ') {
+                count++
+                i++
+            } else {
+                i++
+            }
+        }
+        return count
     }
 }
